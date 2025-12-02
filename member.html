@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Member</title>
+    <link href="/dist/output.css" rel="stylesheet">
+    <!-- html2canvas should load before member.js for safety -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script type="module" src="member.js" defer></script>
+</head>
+
+<body class="bg-green-50 min-h-screen flex items-center justify-center px-4 py-8">
+    <div class="bg-white shadow-lg rounded-lg p-6 w-full max-w-lg">
+        <!-- Back button -->
+        <div class="mb-4">
+            <button type="button" onclick="window.history.back()"
+                class="inline-flex items-center text-green-700 hover:text-green-900">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M13.28 5.22a.75.75 0 010 1.06L8.56 11l4.72 4.72a.75.75 0 11-1.06 1.06l-5.25-5.25a.75.75 0 010-1.06l5.25-5.25a.75.75 0 011.06 0z"
+                        clip-rule="evenodd" />
+                </svg>
+                <span class="ml-2">Back</span>
+            </button>
+        </div>
+
+        <!-- 🖼️ Avatar Section -->
+        <div class="flex flex-col items-center mb-6">
+            <div class="relative">
+                <img id="avatar" src="" alt="Member Photo"
+                    class="w-24 h-24 rounded-full border-4 border-green-500 object-cover shadow-md cursor-pointer"
+                    title="Click to change photo"
+                    onerror="this.src='https://img.freepik.com/premium-vector/muslim-man-avatar-giving-thumbs-up-illustration_591903-650.jpg'" />
+            </div>
+            <p class="text-sm text-gray-500 mt-2">Click the photo to upload</p>
+            <input type="file" id="photoInput" accept="image/*" class="hidden" />
+        </div>
+
+        <h2 class="text-2xl font-bold text-green-700 mb-4 text-center">Member Details</h2>
+
+        <!-- Form -->
+        <form id="edit-form" class="grid grid-cols-1 gap-4" novalidate>
+            <input type="hidden" id="memberId" name="id" />
+            <div>
+                <label class="required">Full Name</label>
+                <input id="name" class="input" type="text" />
+            </div>
+            <div>
+                <label class="required">Father's Name</label>
+                <input id="fatherName" class="input" type="text" />
+            </div>
+            <div>
+                <label class="required">Family Name</label>
+                <input id="familyName" class="input" type="text" />
+            </div>
+            <div>
+                <label class="required">Civil ID</label>
+                <input id="civilId" class="input" type="text" disabled />
+            </div>
+            <div>
+                <label class="required">Date of Birth</label>
+                <input id="dob" class="input" type="date" />
+            </div>
+
+            <div>
+                <label class="required">Blood Group</label>
+                <select id="bloodGroup" class="input">
+                    <option value="">Select</option>
+                    <option>A+</option>
+                    <option>A-</option>
+                    <option>B+</option>
+                    <option>B-</option>
+                    <option>O+</option>
+                    <option>O-</option>
+                    <option>AB+</option>
+                    <option>AB-</option>
+                </select>
+            </div>
+            <div>
+                <label>Gender</label>
+                <select id="gender" class="input">
+                    <option value="">Select</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                </select>
+            </div>
+            <div>
+                <label>Mobile</label>
+                <input id="mobileNumber" class="input" type="tel" />
+            </div>
+            <div>
+                <label>Area</label>
+                <select id="area" class="input"></select>
+            </div>
+            <div>
+                <label>District</label>
+                <select id="district" class="input"></select>
+            </div>
+
+            <div>
+                <label>Local Address</label>
+                <textarea id="localAddress" class="input"></textarea>
+            </div>
+            <div>
+                <label>Permanent Address</label>
+                <textarea id="permanentAddress" class="input"></textarea>
+            </div>
+            <div>
+                <label>Pincode</label>
+                <input id="pincode" class="input" type="text" />
+            </div>
+
+            <div>
+                <label>Medical Insurance</label>
+                <input id="medical" type="checkbox" />
+            </div>
+
+            <!-- Nominee fields shown when Medical is accepted -->
+            <div id="nomineeSection" class="hidden space-y-3">
+                <div>
+                    <label class="required">Nominee Name</label>
+                    <input id="nomineeName" class="input" type="text" />
+                </div>
+                <div>
+                    <label class="required">Nominee Contact</label>
+                    <input id="nomineeContact" class="input" type="tel" />
+                </div>
+                <div>
+                    <label class="required">Relationship</label>
+                    <select id="nomineeRelationship" class="input">
+                        <option value="">Select</option>
+                        <option value="Spouse">Spouse</option>
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Son">Son</option>
+                        <option value="Daughter">Daughter</option>
+                        <option value="Brother">Brother</option>
+                        <option value="Sister">Sister</option>
+                        <option value="Friend">Friend</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+
+            <input type="hidden" id="lastUpdate" />
+            <div class="flex justify-end space-x-2 mt-6">
+                <button type="button" id="saveBtn" class="bg-green-600 text-white px-4 py-2 rounded">Save</button>
+                <button type="button" onclick="window.history.back()"
+                    class="bg-gray-300 px-4 py-2 rounded">Back</button>
+            </div>
+            <script>
+                // Fix: For new form, ensure selecting a picture updates the avatar image immediately
+                document.addEventListener('DOMContentLoaded', function () {
+                    var photoInput = document.getElementById('photoInput');
+                    var avatar = document.getElementById('avatar');
+                    if (photoInput && avatar) {
+                        photoInput.addEventListener('change', function (e) {
+                            var file = e.target.files[0];
+                            if (file) {
+                                var reader = new FileReader();
+                                reader.onload = function (evt) {
+                                    avatar.src = evt.target.result;
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        });
+                    }
+                });
+            </script>
+        </form>
+
+        <!-- Move the Download/View Card button to the very end of the page -->
+        <div class="flex justify-end mt-6">
+            <button id="downloadBtn" type="button" data-preserve="true"
+                class="hidden bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                View / Download ID Card
+            </button>
+        </div>
+    </div>
+    </div>
+    </div>
+    <!-- Snackbar for download notification -->
+    <div id="snackbar"
+        style="visibility:hidden;min-width:220px;background:#333;color:#fff;padding:12px;border-radius:4px;position:fixed;left:50%;transform:translateX(-50%);bottom:30px;text-align:center;z-index:9999;">
+        Downloaded successfully</div>
+    <style>
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        label.required::after {
+            content: "*";
+            color: #ef4444;
+            margin-left: 0.25rem;
+        }
+
+        .input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            outline: none;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .input:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 1px #10b981;
+        }
+
+        /* Show invalid style only when we explicitly enable it */
+        .show-validation .input:invalid {
+            border-color: #ef4444;
+        }
+
+        .show-validation .input:invalid:focus {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 1px #ef4444;
+        }
+
+        .input:invalid {
+            border-color: #ef4444;
+        }
+
+        .input:invalid:focus {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 1px #ef4444;
+        }
+
+        textarea.input {
+            resize: vertical;
+            min-height: 2.5rem;
+        }
+
+        select.input {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        .form-checkbox {
+            border-radius: 0.25rem;
+            border-color: #d1d5db;
+        }
+
+        .form-checkbox:checked {
+            background-color: #10b981;
+            border-color: #10b981;
+        }
+
+        .form-checkbox:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Snackbar animation */
+        #snackbar.show {
+            visibility: visible;
+            animation: fade 3s ease;
+        }
+
+        @keyframes fade {
+            0% {
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+
+    <!-- Medical Terms Modal -->
+    <div id="medicalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 px-4">
+
+        <div class="bg-white rounded-lg shadow-xl w-11/12 max-w-lg p-6">
+            <h3 class="text-xl font-semibold text-green-700 mb-4">Medical Insurance Terms & Conditions</h3>
+            <div class="max-h-60 overflow-y-auto text-sm text-gray-700 space-y-2 mb-4">
+                <p>Please read and accept the terms to enable medical insurance.</p>
+                <ul class="list-disc pl-5 space-y-1">
+                    <li>Coverage is subject to verification and approval.</li>
+                    <li>Nominee details must be accurate and kept up to date.</li>
+                    <li>KMCC is not responsible for false or misleading information.</li>
+                    <li>Benefits may vary based on eligibility and policy updates.</li>
+                </ul>
+            </div>
+            <label class="inline-flex items-center mb-4">
+                <input id="medicalAgree" type="checkbox" class="form-checkbox h-4 w-4 text-green-600" />
+                <span class="ml-2 text-sm text-gray-700">I have read and agree to the Terms & Conditions</span>
+            </label>
+            <div class="flex justify-end gap-2">
+                <button id="medicalCancelBtn" type="button" class="px-4 py-2 rounded bg-gray-200">Cancel</button>
+                <button id="medicalAcceptBtn" type="button"
+                    class="px-4 py-2 rounded bg-green-600 text-white">Accept</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enable validation highlights only when user clicks Save
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('edit-form');
+            const saveBtn = document.getElementById('saveBtn');
+            if (form && saveBtn) {
+                saveBtn.addEventListener('click', () => {
+                    form.classList.add('show-validation');
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Membership Portal</title>
+  <link href="/dist/output.css" rel="stylesheet">
+</head>
+
+<body class="bg-green-50 min-h-screen flex items-center justify-center">
+
+  <!-- 🟢 Terms Modal -->
+  <!-- <div id="terms-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4"> -->
+  <div id="terms-modal" class="hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+      <h2 class="text-xl font-bold mb-4 text-green-700">Terms and Conditions</h2>
+      <p class="text-sm text-gray-700 mb-4">
+        By accessing this portal, you agree to use the information responsibly and only for authorized purposes.
+        Misuse of data may result in penalties under applicable laws.
+      </p>
+
+      <!-- ✅ Agreement Checkbox -->
+      <div class="flex items-center mb-4">
+        <input type="checkbox" id="agree-checkbox"
+          class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+        <label for="agree-checkbox" class="ml-2 text-sm text-gray-700">I agree to the terms</label>
+      </div>
+
+      <div class="flex justify-end space-x-2">
+        <button id="decline-btn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Decline</button>
+        <button id="accept-btn"
+          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled>Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🟢 Civil ID + DOB Form -->
+  <main id="lookup-section" class="bg-white p-6 sm:p-8 rounded-lg shadow-md w-full max-w-md mx-4 hidden">
+    <div class="flex justify-center mb-6">
+      <img src="kmcc logo.png" alt="Logo" class="h-20 sm:h-24 w-auto" loading="lazy" />
+    </div>
+
+    <h1 class="text-xl sm:text-2xl font-bold mb-6 text-center text-green-700">KMCC Membership</h1>
+    <form id="lookup-form" class="space-y-5">
+      <div>
+        <label for="civilId" class="block text-sm font-medium text-gray-700 mb-1">Civil ID</label>
+        <input type="text" id="civilId" required inputmode="numeric" pattern="[0-9]*"
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-base"
+          placeholder="Enter your Civil ID" />
+      </div>
+      <div>
+        <label for="dob" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+        <input type="date" id="dob" required
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-base" />
+      </div>
+      <button type="submit"
+        class="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors text-base font-medium">
+        Search
+      </button>
+      <button id="downloadBtn" style="display: none;">Download ID Card</button>
+      <canvas id="idCanvas" width="600" height="350" style="display: none;"></canvas>
+    </form>
+    <div class="mt-6 text-center">
+      <p class="text-sm sm:text-base text-gray-600">
+        Not registered yet?
+        <button onclick="openCivilIdModal()"
+          class="text-green-600 hover:text-green-700 font-medium ml-1 hover:underline focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-sm inline-block border-0 bg-transparent cursor-pointer">
+          Create new account
+        </button>
+      </p>
+    </div>
+    <div id="civilIdModal" class="fixed inset-0 bg-green-50 bg-opacity-50 flex items-center justify-center hidden z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-80">
+        <h2 class="text-lg font-semibold mb-4">Enter Civil ID</h2>
+        <input type="text" id="civilIdInput"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+          placeholder="Civil ID">
+        <div id="civilIdError" class="text-red-500 text-sm mt-2 hidden"></div>
+        <div class="flex justify-end space-x-2 mt-6">
+          <button onclick="checkCivilId()"
+            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">Submit</button>
+          <button onclick="closeCivilIdModal()"
+            class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors">Close</button>
+        </div>
+      </div>
+    </div>
+
+
+
+  </main>
+
+
+
+  <script type="module">
+
+
+    import { supabase } from './supabase.js';
+
+    const acceptBtn = document.getElementById('accept-btn');
+    const declineBtn = document.getElementById('decline-btn');
+    const agreeCheckbox = document.getElementById('agree-checkbox');
+    const modal = document.getElementById('terms-modal');
+    const mainContent = document.getElementById('lookup-section');
+
+    // ✅ Set default states
+    agreeCheckbox.checked = false;
+    acceptBtn.disabled = true;
+
+    // ✅ Check if terms were accepted within the last hour
+    const acceptedAt = parseInt(localStorage.getItem('termsAcceptedAt') || '0');
+    const now = Date.now();
+    const oneHour = 10 * 60 * 1000;
+
+    if (acceptedAt && (now - acceptedAt < oneHour)) {
+      modal.classList.add('hidden');
+      mainContent.classList.remove('hidden');
+    } else {
+      modal.classList.remove('hidden');
+      mainContent.classList.add('hidden');
+    }
+
+
+
+    // ✅ Enable Accept button only when checkbox is checked
+    agreeCheckbox.addEventListener('change', () => {
+
+      acceptBtn.disabled = !agreeCheckbox.checked;
+    });
+
+    // ✅ Accept button logic
+    acceptBtn.addEventListener('click', () => {
+      const now = Date.now();
+      localStorage.setItem('termsAcceptedAt', now.toString());
+
+
+      modal.classList.add('hidden');
+      mainContent.classList.remove('hidden');
+    });
+
+    // 🚫 Decline button logic
+    declineBtn.addEventListener('click', () => {
+      alert('You must accept the terms to access the portal.');
+    });
+    window.onload = () => {
+      localStorage.removeItem('memberData');
+    };
+
+    // ✅ Supabase Lookup Logic - Use view with district/area names
+    document.getElementById('lookup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const civilId = document.getElementById('civilId').value.trim();
+      const dob = document.getElementById('dob').value;
+
+      const { data, error } = await supabase
+        .from('member_with_area_district1')
+        .select('*')
+        .eq('civil_id', civilId)
+        .eq('dob', dob)
+        .single();
+
+      if (error || !data) {
+        alert('No matching member found. Please check Civil ID and DOB.');
+      } else {
+        localStorage.setItem('memberData', JSON.stringify(data));
+        window.location.href = 'member.html';
+      }
+    });
+
+    // create new member logic can be added here
+
+
+    window.openCivilIdModal = function () {
+      document.getElementById('civilIdModal').classList.remove('hidden');
+    }
+
+    window.closeCivilIdModal = function () {
+      document.getElementById('civilIdModal').classList.add('hidden');
+      document.getElementById('civilIdError').classList.add('hidden');
+      document.getElementById('civilIdInput').value = '';
+    }
+
+    window.checkCivilId = async function () {
+      const civilId = document.getElementById('civilIdInput').value.trim();
+      const errorBox = document.getElementById('civilIdError');
+
+      if (!civilId) {
+        errorBox.textContent = 'Please enter a Civil ID.';
+        errorBox.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('membership')
+          .select('civil_id, dob')
+          .eq('civil_id', civilId)
+          .single();
+
+        if (data) {
+          errorBox.textContent = 'Your Civil ID is already registered. Please contact admin.';
+          errorBox.classList.remove('hidden');
+          return;
+        }
+
+        // Clear modal and redirect
+        document.getElementById('civilIdInput').value = '';
+        document.getElementById('civilIdError').classList.add('hidden');
+        document.getElementById('civilIdModal').classList.add('hidden');
+
+        // Redirect to member.html for new registration
+        window.location.href = `member.html?civilId=${encodeURIComponent(civilId)}&mode=new`;
+      } catch (error) {
+        if (error.code === 'PGRST116') {
+          // Clear modal and redirect
+          document.getElementById('civilIdInput').value = '';
+          document.getElementById('civilIdError').classList.add('hidden');
+          document.getElementById('civilIdModal').classList.add('hidden');
+
+          // No data found, Civil ID is available
+          window.location.href = `member.html?civilId=${encodeURIComponent(civilId)}&mode=new`;
+        } else {
+          console.error('Error checking Civil ID:', error);
+          errorBox.textContent = 'An error occurred. Please try again later.';
+          errorBox.classList.remove('hidden');
+        }
+      }
+    }
+
+    window.closeRegistrationForm = function () {
+      document.getElementById('registrationForm').classList.add('hidden');
+      document.getElementById('civilIdModal').classList.remove('hidden');
+      document.getElementById('civilIdInput').value = '';
+      document.getElementById('civilIdError').classList.add('hidden');
+    }
+
+    // Handle new member registration
+    document.getElementById('newMemberForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const civilId = document.getElementById('regCivilId').value.trim();
+      const name = document.getElementById('regName').value.trim();
+      const dob = document.getElementById('regDob').value;
+      const phone = document.getElementById('regPhone').value.trim();
+      const area = document.getElementById('regArea').value;
+
+      try {
+        const { data, error } = await supabase
+          .from('membership')
+          .insert([
+            {
+              civil_id: civilId,
+              name: name,
+              dob: dob,
+              phone: phone,
+              area: area,
+              status: 'pending' // You can adjust this based on your requirements
+            }
+          ])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Registration successful
+        alert('Registration successful! Please wait for admin approval.');
+        document.getElementById('registrationForm').classList.add('hidden');
+        window.location.reload(); // Refresh the page
+      } catch (error) {
+        console.error('Error registering new member:', error);
+        alert('An error occurred during registration. Please try again later.');
+      }
+    });
+
+
+  </script>
+</body>
+
+</html>

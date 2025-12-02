@@ -1,0 +1,36 @@
+﻿# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables (contains sensitive keys)
+supabase.config.js
+.env
+.env.local
+
+# Build outputs
+dist/
+
+# IDE
+.vs/
+.vscode/
+*.suo
+*.user
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+~$*
+
+# Office temp files
+*.docx
+"web testing and action.docx"
