@@ -1,3 +1,3 @@
 [build]
-  command = "node -e \"const fs=require('fs'); const cfg = `export const SUPABASE_CONFIG = { url: ${JSON.stringify(process.env.SUPABASE_URL || '')}, anonKey: ${JSON.stringify(process.env.SUPABASE_ANON_KEY || '')} };`; fs.writeFileSync('supabase.config.js', cfg);\" && npm run build"
+  command = "node scripts/generate-supabase-config.js && npm run build"
   publish = "."
