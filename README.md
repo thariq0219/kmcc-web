@@ -4,67 +4,104 @@ A web-based membership management system for KMCC (Kerala Muslim Cultural Centre
 
 ## Features
 
-- **Member Registration**: Complete registration form with personal details, nominee information, and profile photo upload
-- **Real-time Status Updates**: Automatic notifications when membership is approved or rejected
-- **ID Card Generation**: Automatic ID card generation and download once membership is approved
-- **District & Area Management**: Dynamic dropdowns for district and area selection
-- **Profile Photo Storage**: Secure photo storage using Supabase Storage
-- **Responsive Design**: Built with Tailwind CSS for mobile and desktop compatibility
+- **Member Registration**: Personal/nominee details and profile photo upload
+- **Real-time Updates**: Auto notifications when approved/rejected
+- **ID Card Generation**: One-click PNG download from the member page
+- **Dynamic District/Area**: Populated from the database
+- **Tailwind CSS**: Responsive UI
 
 ## Prerequisites
 
-- A modern web browser
-- Supabase account and project
-- Git (for version control)
-- Node.js and npm (for Tailwind CSS compilation)
+- Supabase project (URL + anon key)
+- Node.js + npm
+- GitHub account (for Pages)
 
-## Setup Instructions
+## Local Setup
 
-### 1. Clone the Repository
+1) Configure Supabase
 
 ```powershell
-git clone https://github.com/YOUR_USERNAME/kmcc-membership.git
-cd kmcc-membership
+Copy-Item supabase.config.template.js supabase.config.js
+# Edit supabase.config.js and set your Supabase URL + anon key
 ```
 
-### 2. Configure Supabase
-
-1. Copy the template configuration file:
-   ```powershell
-   Copy-Item supabase.config.template.js supabase.config.js
-   ```
-
-2. Open `supabase.config.js` and replace the placeholder values with your actual Supabase credentials
-
-### 3. Database Schema
-
-Create the required tables in your Supabase project (see documentation for SQL schema)
-
-### 4. Install Dependencies
+2) Install deps and build CSS
 
 ```powershell
 npm install
-```
-
-### 5. Build Tailwind CSS
-
-```powershell
 npm run build
 ```
 
-## Deployment
+3) Run locally
 
-### GitHub Pages
+```powershell
+npx http-server -c-1 .
+# Open http://127.0.0.1:8080/index.html
+```
 
-1. Push your code to GitHub (make sure `supabase.config.js` is in `.gitignore`)
-2. Go to repository Settings → Pages
-3. Select Deploy from a branch (main)
-4. Your site will be available at: `https://YOUR_USERNAME.github.io/kmcc-membership/`
+## Publish to GitHub Pages (safe key handling)
 
-## Technologies Used
+This repo includes a workflow at `.github/workflows/deploy.yml` that:
+- Builds Tailwind CSS
+- Creates `supabase.config.js` at deploy time from GitHub Secrets
+- Publishes the site to GitHub Pages
 
-- **Supabase**: Backend as a Service
-- **Vanilla JavaScript**: ES6 modules
-- **Tailwind CSS**: Utility-first CSS framework
-- **html2canvas**: ID card generation
-- **GitHub Pages**: Static site hosting
+Steps to publish:
+
+1) Create a GitHub repo named `kmcc-membership` and push this code
+2) Add repository Secrets (Settings → Secrets and variables → Actions):
+   - `SUPABASE_URL` → your project URL (e.g. https://xyzcompany.supabase.co)
+   - `SUPABASE_ANON_KEY` → your anon key
+3) In Settings → Pages, set Source to "GitHub Actions"
+4) Push to `main` (or run the workflow from the Actions tab)
+5) Your site will appear at `https://YOUR_USERNAME.github.io/kmcc-membership/`
+
+Notes:
+- CSS path is relative (`./dist/output.css`) so it works under `/kmcc-membership/`.
+- `supabase.config.js` is generated only in the deploy artifact; it remains gitignored in your repo.
+
+## Security Notes
+
+- Supabase anon key is public by design for client apps; protect data using Row Level Security (RLS) and policies.
+- Never expose the service role key in the client or repository.
+- Keep `supabase.config.js` out of git (already in `.gitignore`). For production, the GitHub Action injects it using Secrets.
+
+## Useful Scripts
+
+```powershell
+npm run build   # Build Tailwind CSS to ./dist/output.css
+npm run watch   # Watch mode during development
+```
+
+## Tech
+
+- Supabase (DB, Storage, Realtime)
+- Vanilla JS (ES modules)
+- Tailwind CSS
+- html2canvas (ID card PNG)
+- GitHub Pages
+## Deploy to Netlify
+
+Netlify can build the site and inject your Supabase keys securely using environment variables.
+
+This repo includes `netlify.toml` which:
+- Writes `supabase.config.js` from `SUPABASE_URL` and `SUPABASE_ANON_KEY`
+- Runs `npm ci` and `npm run build`
+- Publishes the repo root (`.`)
+
+Steps:
+1) Push this repo to GitHub (or import directly in Netlify)
+2) In Netlify Dashboard: Add new site → Import from Git → pick your repo
+3) Build settings (Netlify will auto-detect from `netlify.toml`):
+   - Build command: defined in `netlify.toml`
+   - Publish directory: `.`
+4) Add environment variables (Site settings → Environment variables):
+   - `SUPABASE_URL` = your Supabase project URL
+   - `SUPABASE_ANON_KEY` = your Supabase anon key
+5) Deploy site
+
+The site URL will look like `https://<your-site-name>.netlify.app/` (you can configure a custom domain later).
+
+Notes:
+- `supabase.config.js` is generated at build time and not committed.
+- The anon key is safe for client use; secure data with RLS and policies.
