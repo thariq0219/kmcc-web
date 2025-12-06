@@ -155,6 +155,10 @@ function buildCardElement(memberData) {
     card.style.overflow = 'hidden';
     card.style.border = '1px solid #0a7700';
 
+    card.style.margin = '16px'; // ✅ Space outside the border
+    card.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.25)';
+
+
     const bg = document.createElement('img');
     bg.src = 'Logo-bg (1).png';
     bg.style.position = 'absolute';
@@ -176,18 +180,18 @@ function buildCardElement(memberData) {
 
     const header = document.createElement('div');
     header.style.color = '#fff';
-    header.style.fontWeight = '600';
+    header.style.fontWeight = '800';
     header.style.fontSize = '14px';
     header.style.lineHeight = '1.2'; // Removes default margin
     header.style.marginBottom = '24px';
-    header.innerHTML = 'SALALAH - KMCC<br><span style="font-weight:400;font-size:12px;">Membership Card 2025-27</span><br/>';
+    header.innerHTML = 'SALALAH - KMCC<br><span style="font-weight:600;font-size:12px;">Membership Card 2026-27</span><br/>';
 
 
     function row(label, value, bold = false, isFirst = false) {
         const r = document.createElement('div');
         r.style.display = 'flex';
         r.style.alignItems = 'center';
-        r.style.fontSize = '12px';
+        r.style.fontSize = '13px';
         r.style.margin = isFirst ? '32px 0 16px 0' : '16px 0'; // More space on top if first
         r.style.lineHeight = '0.6';
 
@@ -198,7 +202,7 @@ function buildCardElement(memberData) {
 
 
         const colon = document.createElement('Strong');
-        colon.textContent = ':';
+        colon.textContent = ':  ';
         colon.style.marginLeft = '4px';
 
         const s2 = document.createElement('span');
@@ -209,13 +213,12 @@ function buildCardElement(memberData) {
     }
 
     content.appendChild(header);
-    content.appendChild(row('KMCC No', memberData.id, true));
-    content.appendChild(row('Name', memberData.name));
-    content.appendChild(row('Area', memberData.area_name));
-    content.appendChild(row('Mobile', memberData.mobile_number || memberData.mobile));
-    content.appendChild(row('District', memberData.district_name));
-    content.appendChild(row('Blood', memberData.blood_group));
-
+    content.appendChild(row('KMCC NO.', memberData.id.toString().toUpperCase(), true));
+    content.appendChild(row('NAME', memberData.name.toUpperCase()));
+    content.appendChild(row('AREA', memberData.area_name.toUpperCase()));
+    content.appendChild(row('MOBILE', (memberData.mobile_number || memberData.mobile).toUpperCase()));
+    content.appendChild(row('DISTRICT', memberData.district_name.toUpperCase()));
+    content.appendChild(row('BLOOD', memberData.blood_group.toUpperCase()));
     const photoBox = document.createElement('div');
     photoBox.style.position = 'absolute';
     photoBox.style.right = '8px';
