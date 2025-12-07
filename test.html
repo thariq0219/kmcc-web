@@ -3,15 +3,20 @@
 
 <head>
     <title>Test</title>
-    <script>
-        // Check for any script tags with share-modal.js
-        window.onload = function () {
-            const scripts = document.getElementsByTagName('script');
-            for (let script of scripts) {
-                console.log('Script src:', script.src);
-            }
-        };
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+        const supabase = createClient(
+            'https://twzycmqwmqelwgnjiqmb.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3enljbXF3bXFlbHdnbmppcW1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNjk2MzcsImV4cCI6MjA3Nzc0NTYzN30.LxaCQgOVPSSwWqJZghHnJFmA6mTvn6GstxzcTMmMgEo'
+        );
+
+        // Use it here:
+        const { data, error } = await supabase.from('your_table').select('*').limit(1);
+        console.log({ data, error });
     </script>
+
 </head>
 
 <body>
