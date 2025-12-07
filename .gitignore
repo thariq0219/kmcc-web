@@ -1,6 +1,6 @@
 ﻿# Dependencies
 node_modules/
-package-lock.json
+
 
 # Environment variables (contains sensitive keys)
 supabase.config.js
