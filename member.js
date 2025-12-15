@@ -297,10 +297,16 @@ async function generateAndDownloadCardDirect() {
 }
 
 async function saveMember() {
-    const requiredIds = ['civilId', 'dob', 'name', 'district', 'area', 'mobileNumber'];
+    const requiredIds = ['civilId', 'dob', 'name', 'fatherName', 'familyName', 'district', 'area', 'mobileNumber', 'bloodGroup', 'gender', 'localAddress', 'permanentAddress', 'pincode'];
     for (const id of requiredIds) {
         const el = document.getElementById(id);
-        if (!el || !el.value) { alert('Please fill required fields.'); return; }
+        if (!el || !el.value) { alert('Please fill all required fields.'); return; }
+    }
+
+    // Check if photo is required
+    if (!selectedPhotoFile && !currentPhotoUrl) {
+        alert('Profile photo is required. Please upload a photo.');
+        return;
     }
 
     // Check medical checkbox and validate nominee fields if checked

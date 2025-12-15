@@ -34,8 +34,9 @@
                     class="w-24 h-24 rounded-full border-4 border-green-500 object-cover shadow-md cursor-pointer"
                     title="Click to change photo"
                     onerror="this.src='https://img.freepik.com/premium-vector/muslim-man-avatar-giving-thumbs-up-illustration_591903-650.jpg'" />
+                <span class="absolute -top-1 -right-1 text-red-500 text-2xl" title="Required">*</span>
             </div>
-            <p class="text-sm text-gray-500 mt-2">Click the photo to upload</p>
+            <p class="text-sm text-gray-500 mt-2">Click the photo to upload <span class="text-red-500">*</span></p>
             <input type="file" id="photoInput" accept="image/*" class="hidden" />
         </div>
 
@@ -80,7 +81,7 @@
                 </select>
             </div>
             <div>
-                <label>Gender</label>
+                <label class="required">Gender</label>
                 <select id="gender" class="input">
                     <option value="">Select</option>
                     <option>Male</option>
@@ -88,35 +89,36 @@
                 </select>
             </div>
             <div>
-                <label>Mobile</label>
+                <label class="required">Mobile</label>
                 <input id="mobileNumber" class="input" type="tel" />
             </div>
             <div>
-                <label>Area</label>
+                <label class="required">Area</label>
                 <select id="area" class="input"></select>
             </div>
             <div>
-                <label>District</label>
+                <label class="required">District</label>
                 <select id="district" class="input"></select>
             </div>
 
             <div>
-                <label>Local Address</label>
+                <label class="required">Local Address</label>
                 <textarea id="localAddress" class="input"></textarea>
             </div>
             <div>
-                <label>Permanent Address</label>
+                <label class="required">Permanent Address</label>
                 <textarea id="permanentAddress" class="input"></textarea>
             </div>
             <div>
-                <label>Pincode</label>
+                <label class="required">Pincode</label>
                 <input id="pincode" class="input" type="text" />
             </div>
 
-            <div>
-                <label>Medical Insurance</label>
+            <div style="display: flex; align-items: center; gap: 8px;">
                 <input id="medical" type="checkbox" />
+                <label for="medical">എനിക്ക് മെഡിക്കൽ സ്കീമിൽ ചേരാൻ താല്പര്യമുണ്ട്</label>
             </div>
+
 
             <!-- Nominee fields shown when Medical is accepted -->
             <div id="nomineeSection" class="hidden space-y-3">
