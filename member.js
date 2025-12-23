@@ -9,6 +9,27 @@ let areas = [];
 let selectedPhotoFile = null;
 // Keep photo URL only in memory/localStorage, not in the form
 let currentPhotoUrl = null;
+let memberCreatedAt = null; // ISO string when available
+let formReadOnly = false; // track read-only state to avoid re-enabling controls
+
+// Eligibility helpers for medical scheme
+function isNewMember(createdAtIso) {
+    if (!createdAtIso) return false;
+    const created = new Date(createdAtIso).getTime();
+    const now = Date.now();
+    const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+    return (now - created) < oneYearMs;
+}
+
+function formatRemaining(createdAtIso) {
+    if (!createdAtIso) return '';
+    const created = new Date(createdAtIso).getTime();
+    const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+    const target = new Date(created + oneYearMs);
+    const remainingMs = Math.max(0, (created + oneYearMs) - Date.now());
+    const days = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+    return `Medical available after ${target.toLocaleDateString()} (${days} days)`;
+}
 
 
 // ---------------- Helpers ----------------
@@ -49,6 +70,11 @@ function populateExistingMemberData(data) {
     const avatar = document.getElementById('avatar');
     if (avatar && currentPhotoUrl) avatar.src = currentPhotoUrl;
 
+    // Capture created_at if included in the view
+    if (data.created_at) {
+        memberCreatedAt = data.created_at;
+    }
+
     const status = (data.status || '').toLowerCase();
     if (['a', 'approved'].includes(status)) {
         const btn = document.getElementById('downloadBtn');
@@ -76,6 +102,9 @@ function populateExistingMemberData(data) {
         const nomineeSection = document.getElementById('nomineeSection');
         if (nomineeSection) nomineeSection.classList.remove('hidden');
     }
+
+    // Configure medical eligibility UI with current state
+    configureMedicalEligibilityUI(!!data.medical);
 }
 
 function populateSelect(list, id, selected) {
@@ -310,7 +339,14 @@ async function saveMember() {
     }
 
     // Check medical checkbox and validate nominee fields if checked
-    const medicalChecked = !!document.getElementById('medical')?.checked;
+    const medicalEl = document.getElementById('medical');
+    const medicalChecked = !!medicalEl?.checked;
+    // Block saving medical=true when ineligible (mode=new or within 1 year)
+    const ineligible = (mode === 'new') || isNewMember(memberCreatedAt);
+    if (medicalChecked && ineligible && !medicalEl.disabled) {
+        alert('Medical scheme is available only after 1 year from membership creation.');
+        return;
+    }
     if (medicalChecked) {
         const nomineeIds = ['nomineeName', 'nomineeContact', 'nomineeRelationship'];
         for (const id of nomineeIds) {
@@ -337,7 +373,7 @@ async function saveMember() {
         local_address: document.getElementById('localAddress')?.value || null,
         permanent_address: document.getElementById('permanentAddress')?.value || null,
         pincode: document.getElementById('pincode')?.value || null,
-        status: mode === 'new' ? 'P' : undefined,
+        status: 'P', // pending on save
         last_update: new Date().toISOString(),
         nominee_name: document.getElementById('nomineeName')?.value || null,
         nominee_relation: document.getElementById('nomineeRelationship')?.value || null,
@@ -373,8 +409,10 @@ async function saveMember() {
 
         if (viewError) throw viewError;
 
-        localStorage.setItem('memberData', JSON.stringify(updatedData || db.data));
-        alert(mode === 'new' ? 'Submitted. Await approval.' : 'Updated.');
+        // Merge view row with base row to preserve fields like pincode
+        const merged = { ...(updatedData || {}), ...(db.data || {}), pincode: formData.pincode };
+        localStorage.setItem('memberData', JSON.stringify(merged));
+        alert(mode === 'new' ? 'Submitted. Await approval.' : 'Updated. Await approval.');
         window.location.href = 'index.html';
     } catch (e) {
         alert('Save error.');
@@ -386,6 +424,7 @@ async function saveMember() {
 function setReadOnlyState(readonly) {
     const form = document.getElementById('edit-form');
     if (!form) return;
+    formReadOnly = !!readonly;
     // Disable/enable inputs, selects, textareas
     form.querySelectorAll('input, select, textarea, button').forEach(el => {
         // keep Back buttons (type=button) usable by checking data-preserve attribute
@@ -405,6 +444,42 @@ function setReadOnlyState(readonly) {
     // Save button visibility
     const saveBtn = document.getElementById('saveBtn');
     if (saveBtn) saveBtn.style.display = readonly ? 'none' : '';
+
+    // Also disable medical modal controls which are outside the form
+    const medicalAgree = document.getElementById('medicalAgree');
+    const medicalAcceptBtn = document.getElementById('medicalAcceptBtn');
+    const medicalCancelBtn = document.getElementById('medicalCancelBtn');
+    if (medicalAgree) medicalAgree.disabled = !!readonly;
+    if (medicalAcceptBtn) medicalAcceptBtn.disabled = !!readonly;
+    if (medicalCancelBtn) medicalCancelBtn.disabled = !!readonly;
+}
+
+// Configure medical checkbox visibility and messaging based on eligibility
+function configureMedicalEligibilityUI(existingMedicalChecked) {
+    const medical = document.getElementById('medical');
+    const info = document.getElementById('medicalInfo');
+    const nomineeSection = document.getElementById('nomineeSection');
+    if (!medical) return;
+
+    const ineligible = formReadOnly || (mode === 'new') || isNewMember(memberCreatedAt);
+
+    if (ineligible) {
+        medical.disabled = true;
+        // If not already enrolled, keep unchecked and hide nominee
+        if (!existingMedicalChecked) {
+            medical.checked = false;
+            if (nomineeSection) nomineeSection.classList.add('hidden');
+        }
+        if (info) {
+            info.classList.remove('hidden');
+            info.textContent = mode === 'new'
+                ? 'അംഗത്വത്തിൽ നിന്ന് ഒരു വർഷത്തിനുശേഷം മെഡിക്കൽ യോഗ്യത നേടാം.'
+                : formatRemaining(memberCreatedAt);
+        }
+    } else {
+        medical.disabled = false;
+        if (info) info.classList.add('hidden');
+    }
 }
 
 // Setup real-time subscription for status changes
@@ -470,6 +545,9 @@ async function initializePage() {
         setField('civilId', civilIdFromUrl || '');
         // new member must be editable
         setReadOnlyState(false);
+        // Block medical for new member creation
+        memberCreatedAt = null;
+        configureMedicalEligibilityUI(false);
     } else {
         const stored = localStorage.getItem('memberData');
         if (stored) {
@@ -477,6 +555,23 @@ async function initializePage() {
             populateExistingMemberData(memberData);
             // Setup realtime subscription for status updates
             setupRealtimeSubscription(memberData.civil_id, memberData.dob);
+            // Fetch created_at from base table if not present in view
+            if (!memberCreatedAt && memberData?.civil_id && memberData?.dob) {
+                try {
+                    const { data: baseRow } = await supabase
+                        .from('membership')
+                        .select('created_at, medical')
+                        .eq('civil_id', memberData.civil_id)
+                        .eq('dob', memberData.dob)
+                        .maybeSingle();
+                    if (baseRow) {
+                        memberCreatedAt = baseRow.created_at || null;
+                        configureMedicalEligibilityUI(!!(baseRow.medical || memberData.medical));
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch created_at:', e);
+                }
+            }
         }
     }
 }
@@ -509,6 +604,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (medical && modal) {
         medical.addEventListener('change', () => {
+            // Prevent opening modal when ineligible
+            if (medical.disabled) {
+                const info = document.getElementById('medicalInfo');
+                if (info) {
+                    info.classList.remove('hidden');
+                    info.textContent = mode === 'new'
+                        ? 'Medical scheme can be enabled after approval and 1 year.'
+                        : formatRemaining(memberCreatedAt);
+                }
+                // Revert any attempted toggle
+                medical.checked = !!(medical.checked && !medical.disabled);
+                return;
+            }
             if (medical.checked) {
                 if (agree) agree.checked = false;
                 modal.classList.remove('hidden');
