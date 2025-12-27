@@ -17,14 +17,14 @@ function isNewMember(createdAtIso) {
     if (!createdAtIso) return false;
     const created = new Date(createdAtIso).getTime();
     const now = Date.now();
-    const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+    const oneYearMs = 250 * 24 * 60 * 60 * 1000;
     return (now - created) < oneYearMs;
 }
 
 function formatRemaining(createdAtIso) {
     if (!createdAtIso) return '';
     const created = new Date(createdAtIso).getTime();
-    const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+    const oneYearMs = 250 * 24 * 60 * 60 * 1000;
     const target = new Date(created + oneYearMs);
     const remainingMs = Math.max(0, (created + oneYearMs) - Date.now());
     const days = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
@@ -63,7 +63,8 @@ function populateExistingMemberData(data) {
         lastUpdate: data.updated_at,
         nomineeName: data.nominee_name,
         nomineeRelationship: data.nominee_relation,
-        nomineeContact: data.nominee_contact
+        nomineeContact: data.nominee_contact,
+        membershipId: data.membership_id
     };
     Object.entries(map).forEach(([k, v]) => setField(k, v));
     currentPhotoUrl = data.photo_url || null;
@@ -189,7 +190,7 @@ function buildCardElement(memberData) {
 
 
     const bg = document.createElement('img');
-    bg.src = 'Logo-bg (1).png';
+    bg.src = memberData.gender && memberData.gender.toLowerCase() === 'female' ? 'logo-bg-female.png' : 'Logo-bg (1).png';
     bg.style.position = 'absolute';
     bg.style.inset = '0';
     bg.style.width = '100%';
@@ -242,7 +243,7 @@ function buildCardElement(memberData) {
     }
 
     content.appendChild(header);
-    content.appendChild(row('KMCC NO.', memberData.id.toString().toUpperCase(), true));
+    content.appendChild(row('KMCC NO.', memberData.membership_id.toString().toUpperCase(), true));
     content.appendChild(row('NAME', memberData.name.toUpperCase()));
     content.appendChild(row('AREA', memberData.area_name.toUpperCase()));
     content.appendChild(row('MOBILE', (memberData.mobile_number || memberData.mobile).toUpperCase()));
