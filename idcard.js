@@ -40,6 +40,7 @@ function createHighResClone(cardElement) {
     clone.style.height = `${targetHeight}px`;
     clone.style.boxSizing = 'border-box';
     clone.style.transform = 'none';
+    clone.style.margin = '0';  // Remove margin to prevent black borders
 
     wrapper.appendChild(clone);
     document.body.appendChild(wrapper);
@@ -126,18 +127,19 @@ async function generateAndDownloadCard() {
 
     try {
         const canvas = await html2canvas(clone, {
-            scale: 1,
+            scale: 2,
             useCORS: true,
             backgroundColor: '#ffffff',
             imageTimeout: 0,
             logging: false,
             windowWidth: targetWidth,
-            windowHeight: targetHeight
+            windowHeight: targetHeight,
+            allowTaint: false
         });
 
         const fileName = `KMCC_ID_Card_${memberData.civil_id || memberData.name || 'member'}.png`;
 
-        // Prefer Blob for better reliability
+        // Prefer Blob for better reliability and quality preservation
         if (canvas.toBlob) {
             canvas.toBlob(blob => {
                 if (!blob) {
@@ -148,7 +150,7 @@ async function generateAndDownloadCard() {
                 const url = URL.createObjectURL(blob);
                 triggerDownload(url, fileName);
                 setTimeout(() => URL.revokeObjectURL(url), 5000);
-            }, 'image/png', 1.0);
+            }, 'image/png');
         } else {
             const dataURL = canvas.toDataURL('image/png');
             triggerDownload(dataURL, fileName);

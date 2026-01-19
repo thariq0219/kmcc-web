@@ -1,27 +1,5 @@
 import { supabase } from './supabase.js';
 
-
-function customAlert(message, callback) {
-    const modal = document.getElementById('customAlert');
-    const messageEl = document.getElementById('customAlertMessage');
-    const okBtn = document.getElementById('customAlertBtn');
-
-    if (!modal || !messageEl || !okBtn) return;
-
-    messageEl.textContent = message;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    const handleClick = () => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        okBtn.removeEventListener('click', handleClick);
-        if (callback) callback();
-    };
-
-    okBtn.addEventListener('click', handleClick);
-}
-
 // ---------------- State ----------------
 const urlParams = new URLSearchParams(window.location.search);
 const mode = urlParams.get('mode');            // 'new' or undefined
@@ -109,7 +87,7 @@ function populateExistingMemberData(data) {
                     await generateAndDownloadCardDirect();
                 } catch (err) {
                     console.error('Direct download failed:', err);
-                    customAlert('Could not download ID card.');
+                    alert('Could not download ID card.');
                 }
             };
         }
@@ -469,12 +447,12 @@ async function saveMember() {
     const requiredIds = ['civilId', 'dob', 'name', 'fatherName', 'familyName', 'district', 'area', 'mobileNumber', 'bloodGroup', 'gender', 'localAddress', 'permanentAddress', 'pincode'];
     for (const id of requiredIds) {
         const el = document.getElementById(id);
-        if (!el || !el.value) { customAlert('Please fill all required fields.'); return; }
+        if (!el || !el.value) { alert('Please fill all required fields.'); return; }
     }
 
     // Check if photo is required
     if (!selectedPhotoFile && !currentPhotoUrl) {
-        customAlert('Profile photo is required. Please upload a photo.');
+        alert('Profile photo is required. Please upload a photo.');
         return;
     }
 
@@ -484,7 +462,7 @@ async function saveMember() {
     // Block saving medical=true when ineligible (mode=new or within 1 year)
     const ineligible = (mode === 'new') || isNewMember(memberCreatedAt);
     if (medicalChecked && ineligible && !medicalEl.disabled) {
-        customAlert('Medical scheme is available only after 1 year from membership creation.');
+        alert('Medical scheme is available only after 1 year from membership creation.');
         return;
     }
     if (medicalChecked) {
@@ -492,7 +470,7 @@ async function saveMember() {
         for (const id of nomineeIds) {
             const el = document.getElementById(id);
             if (!el || !el.value) {
-                customAlert('Please fill all nominee details for medical insurance.');
+                alert('Please fill all nominee details for medical insurance.');
                 return;
             }
         }
@@ -528,7 +506,7 @@ async function saveMember() {
                 const { data } = supabase.storage.from('profile').getPublicUrl(fileName);
                 currentPhotoUrl = data?.publicUrl || null;
             }
-        } catch { customAlert('Photo upload failed.'); }
+        } catch { alert('Photo upload failed.'); }
     }
     formData.photo_url = currentPhotoUrl || null;
 
@@ -551,12 +529,10 @@ async function saveMember() {
         // Merge view row with base row to preserve fields like pincode
         const merged = { ...(updatedData || {}), ...(db.data || {}), pincode: formData.pincode };
         localStorage.setItem('memberData', JSON.stringify(merged));
-        customAlert(
-            mode === 'new' ? 'Submitted. Please contact your area admin for approval.' : 'Updated. Please contact your area admin for approval.',
-            () => { window.location.href = 'index.html'; }
-        );
+        alert(mode === 'new' ? 'Submitted. Await approval.' : 'Updated. Await approval.');
+        window.location.href = 'index.html';
     } catch (e) {
-        customAlert('Save error.');
+        alert('Save error.');
         console.error(e);
     }
 }
@@ -653,11 +629,11 @@ function setupRealtimeSubscription(civilId, dob) {
                     localStorage.setItem('memberData', JSON.stringify(updatedData));
 
                     if (['a', 'approved'].includes(newStatus)) {
-                        customAlert('Your membership has been approved!');
+                        alert('Your membership has been approved!');
                         // Refresh the page to show download button
                         window.location.reload();
                     } else if (['r', 'rejected'].includes(newStatus)) {
-                        customAlert('Your membership status has been updated to rejected.');
+                        alert('Your membership status has been updated to rejected.');
                         window.location.reload();
                     }
                 }
@@ -768,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         acceptBtn?.addEventListener('click', () => {
-            if (!agree?.checked) { customAlert('Please agree first.'); return; }
+            if (!agree?.checked) { alert('Please agree first.'); return; }
             toggleNominee(true);
             modal.classList.add('hidden');
             modal.classList.remove('flex');
